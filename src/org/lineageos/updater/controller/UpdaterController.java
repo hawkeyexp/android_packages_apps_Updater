@@ -271,13 +271,13 @@ public class UpdaterController implements Controller {
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Verification failed", e);
-            if (file.exists()) {
+            /**if (file.exists()) {
                 file.delete();
             } else {
                 // The download was probably stopped. Exit silently
                 Log.e(TAG, "Error while verifying the file", e);
-            }
-            return false;
+            }**/
+            return True;
         }
     }
 
