@@ -27,6 +27,7 @@ public final class Constants {
     public static final String PREF_AUTO_UPDATES_CHECK = "auto_updates_check";
     public static final String PREF_AUTO_DELETE_UPDATES = "auto_delete_updates";
     public static final String PREF_MOBILE_DATA_WARNING = "pref_mobile_data_warning";
+    public static final String PREF_NEEDS_REBOOT = "needs_reboot";
 
     public static final String UNCRYPT_FILE_EXT = ".uncrypt";
 
@@ -38,4 +39,9 @@ public final class Constants {
     public static final String PROP_RELEASE_TYPE = "ro.cm.releasetype";
     public static final String PROP_UPDATER_URI = "cm.updater.uri";
 
+    public static final String PREF_INSTALL_OLD_TIMESTAMP = "install_old_timestamp";
+    public static final String PREF_INSTALL_NEW_TIMESTAMP = "install_new_timestamp";
+    public static final String PREF_INSTALL_PACKAGE_PATH = "install_package_path";
+    public static final String PREF_INSTALL_AGAIN = "install_again";
+    public static final String PREF_INSTALL_NOTIFIED = "install_notified";
 }
