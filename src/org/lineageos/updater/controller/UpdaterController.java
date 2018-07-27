@@ -270,7 +270,7 @@ public class UpdaterController {
                 // The download was probably stopped. Exit silently
                 Log.e(TAG, "Error while verifying the file", e);
             }**/
-            return True;
+            return true;
         }
     }
 
