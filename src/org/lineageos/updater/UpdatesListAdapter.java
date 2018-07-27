@@ -16,7 +16,10 @@
 package org.lineageos.updater;
 
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.os.BatteryManager;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -40,7 +43,7 @@ import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.lineageos.updater.controller.Controller;
+import org.lineageos.updater.controller.UpdaterController;
 import org.lineageos.updater.controller.UpdaterService;
 import org.lineageos.updater.misc.BuildInfoUtils;
 import org.lineageos.updater.misc.Constants;
@@ -64,7 +67,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
 
     private List<String> mDownloadIds;
     private String mSelectedDownload;
-    private Controller mUpdaterController;
+    private UpdaterController mUpdaterController;
     private UpdatesListActivity mActivity;
 
     private enum Action {
@@ -75,6 +78,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
         INFO,
         DELETE,
         CANCEL_INSTALLATION,
+        REBOOT,
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -115,7 +119,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
         return new ViewHolder(view);
     }
 
-    public void setUpdaterController(Controller updaterController) {
+    public void setUpdaterController(UpdaterController updaterController) {
         mUpdaterController = updaterController;
         notifyDataSetChanged();
     }
@@ -133,7 +137,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
                     update.getProgress() / 100.f);
             long eta = update.getEta();
             if (eta > 0) {
-                CharSequence etaString = StringGenerator.formatDuration(mActivity, eta * 1000);
+                CharSequence etaString = StringGenerator.formatETA(mActivity, eta * 1000);
                 viewHolder.mProgressText.setText(mActivity.getString(
                         R.string.list_download_progress_eta_new, downloaded, total, etaString,
                         percentage));
@@ -151,11 +155,17 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
                     update.getFinalizing() ?
                             R.string.finalizing_package :
                             R.string.preparing_ota_first_boot);
+            viewHolder.mProgressBar.setIndeterminate(false);
             viewHolder.mProgressBar.setProgress(update.getInstallProgress());
         } else if (mUpdaterController.isVerifyingUpdate(downloadId)) {
             setButtonAction(viewHolder.mAction, Action.INSTALL, downloadId, false);
             viewHolder.mProgressText.setText(R.string.list_verifying_update);
             viewHolder.mProgressBar.setIndeterminate(true);
+        } else if (mUpdaterController.isWaitingForReboot(downloadId)) {
+            setButtonAction(viewHolder.mAction, Action.REBOOT, downloadId, false);
+            viewHolder.mProgressText.setText(R.string.installing_update_finished);
+            viewHolder.mProgressBar.setIndeterminate(false);
+            viewHolder.mProgressBar.setProgress(100);
         } else {
             canDelete = true;
             setButtonAction(viewHolder.mAction, Action.RESUME, downloadId, !isBusy());
@@ -203,7 +213,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
 
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
-        if (mUpdaterController == null) {
+        if (mDownloadIds == null) {
             viewHolder.mAction.setEnabled(false);
             return;
         }
@@ -259,10 +269,16 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
     }
 
     public void notifyItemChanged(String downloadId) {
+        if (mDownloadIds == null) {
+            return;
+        }
         notifyItemChanged(mDownloadIds.indexOf(downloadId));
     }
 
     public void removeItem(String downloadId) {
+        if (mDownloadIds == null) {
+            return;
+        }
         int position = mDownloadIds.indexOf(downloadId);
         mDownloadIds.remove(downloadId);
         notifyItemRemoved(position);
@@ -363,6 +379,13 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
                 clickListener = enabled ? view -> getCancelInstallationDialog().show() : null;
             }
             break;
+            case REBOOT: {
+                button.setText(R.string.reboot);
+                button.setEnabled(enabled);
+                clickListener = enabled ?
+                        view -> mActivity.sendBroadcast(new Intent(Intent.ACTION_REBOOT)) : null;
+            }
+            break;
             default:
                 clickListener = null;
         }
@@ -402,6 +425,16 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
     }
 
     private AlertDialog.Builder getInstallDialog(final String downloadId) {
+        if (!isBatteryLevelOk()) {
+            Resources resources = mActivity.getResources();
+            String message = resources.getString(R.string.dialog_battery_low_message_pct,
+                    resources.getInteger(R.integer.battery_ok_percentage_discharging),
+                    resources.getInteger(R.integer.battery_ok_percentage_charging));
+            return new AlertDialog.Builder(mActivity)
+                    .setTitle(R.string.dialog_battery_low_title)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, null);
+        }
         UpdateInfo update = mUpdaterController.getUpdate(downloadId);
         int resId;
         try {
@@ -508,5 +541,19 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
                 .show();
         TextView textView = (TextView) dialog.findViewById(android.R.id.message);
         textView.setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    private boolean isBatteryLevelOk() {
+        Intent intent = mActivity.registerReceiver(null,
+                new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (!intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false)) {
+            return true;
+        }
+        int percent = Math.round(100.f * intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 100) /
+                intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100));
+        int required = intent.getBooleanExtra(BatteryManager.EXTRA_PLUGGED, false) ?
+                mActivity.getResources().getInteger(R.integer.battery_ok_percentage_charging) :
+                mActivity.getResources().getInteger(R.integer.battery_ok_percentage_discharging);
+        return percent >= required;
     }
 }

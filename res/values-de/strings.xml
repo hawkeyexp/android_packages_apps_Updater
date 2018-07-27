@@ -22,6 +22,12 @@
          WARNING: The application can and will delete any unknown file. -->
   <!-- Directory where the downloads will be exported to.
          The path is relative to the root of the external storage.-->
+  <!--
+        Optional placeholders replaced at runtime:
+          {device} - Device name
+          {type} - Build type
+          {incr} - Incremental version
+    -->
   <string name="verification_failed_notification">Überprüfung fehlgeschlagen</string>
   <string name="verifying_download_notification">Update wird geprüft</string>
   <string name="downloading_notification">Wird heruntergeladen</string>
@@ -29,6 +35,7 @@
   <string name="download_paused_error_notification">Fehler beim Herunterladen</string>
   <string name="download_completed_notification">Herunterladen abgeschlossen</string>
   <string name="download_starting_notification">Herunterladen wird gestartet</string>
+  <string name="update_failed_notification">Update fehlgeschlagen</string>
   <string name="new_updates_found_title">Neue Updates</string>
   <string name="text_download_speed">%1$s, %2$s/s</string>
   <string name="pause_button">Pause</string>
@@ -41,13 +48,13 @@
   <string name="dialog_prepare_zip_message">Update wird vorbereitet</string>
   <string name="reboot">Neustart</string>
   <string name="menu_refresh">Aktualisieren</string>
+  <string name="menu_preferences">Voreinstellungen</string>
   <string name="menu_auto_updates_check">Automatisch nach Updates suchen</string>
   <string name="menu_auto_delete_updates">Updates nach Installation löschen</string>
   <string name="menu_delete_update">Löschen</string>
   <string name="menu_copy_url">URL in Zwischenablage kopieren</string>
   <string name="menu_export_update">Update exportieren</string>
   <string name="menu_show_changelog">Changelog anzeigen</string>
-  <string name="dialog_checking_for_updates">Updates werden gesucht</string>
   <string name="snack_updates_found">Neue Updates gefunden</string>
   <string name="snack_no_updates_found">Keine neuen Updates gefunden</string>
   <string name="snack_updates_check_failed">Die Suche nach Updates ist fehlgeschlagen. Bitte überprüfen Sie die Internetverbindung und versuchen Sie es später erneut.</string>
@@ -60,17 +67,17 @@
   <string name="header_last_updates_check">Zuletzt geprüft: <xliff:g id="date" example="1 January 1970">%1$s</xliff:g> (<xliff:g id="time" example="01:23">%2$s</xliff:g>)</string>
   <string name="list_build_version">LineageOS <xliff:g id="version" example="14.1">%1$s</xliff:g></string>
   <string name="list_build_version_date">LineageOS <xliff:g id="version" example="14.1">%1$s</xliff:g> - <xliff:g id="date" example="July 11, 2017">%2$s</xliff:g></string>
-  <string name="list_download_progress"><xliff:g id="filesize_without_unit" example="12.2">%1$s</xliff:g> von <xliff:g id="filesize_without_unit" example="310 MB">%2$s</xliff:g></string>
-  <string name="list_download_progress_eta"><xliff:g id="filesize_without_unit" example="12.2">%1$s</xliff:g> von <xliff:g id="filesize_without_unit" example="310 MB">%2$s</xliff:g> - <xliff:g id="duration" example="3 minutes">%3$s</xliff:g> verbleibend</string>
+  <string name="list_download_progress_new"><xliff:g id="filesize_without_unit" example="12.2">%1$s</xliff:g> von <xliff:g id="filesize_without_unit" example="310 MB">%2$s</xliff:g> • <xliff:g id="percentage" example="56">%3$s</xliff:g></string>
+  <string name="list_download_progress_eta_new"><xliff:g id="filesize_without_unit" example="12.2">%1$s</xliff:g> von <xliff:g id="filesize_without_unit" example="310 MB">%2$s</xliff:g>(<xliff:g id="eta" example="3 minutes left">%3$s</xliff:g>) • <xliff:g id="percentage" example="56">%4$s</xliff:g></string>
   <string name="list_verifying_update">Update wird geprüft</string>
   <string name="list_no_updates">Keine neuen Updates gefunden. Um manuell nach neuen Updates zu suchen, verwenden Sie die Schaltfläche \"Aktualisieren\".</string>
-  <string name="action_description_download">Herunterladen</string>
-  <string name="action_description_pause">Herunterladen pausieren</string>
-  <string name="action_description_resume">Herunterladen fortsetzen</string>
-  <string name="action_description_install">Update installieren</string>
-  <string name="action_description_info">Informationen anzeigen</string>
-  <string name="action_description_delete">Update löschen</string>
-  <string name="action_description_cancel">Installation abbrechen</string>
+  <string name="action_download">Herunterladen</string>
+  <string name="action_pause">Anhalten</string>
+  <string name="action_resume">Fortsetzen</string>
+  <string name="action_install">Installieren</string>
+  <string name="action_info">Information</string>
+  <string name="action_delete">Löschen</string>
+  <string name="action_cancel">Abbrechen</string>
   <string name="confirm_delete_dialog_title">Datei löschen</string>
   <string name="confirm_delete_dialog_message">Soll die ausgewählte Update-Datei gelöscht werden?</string>
   <string name="apply_update_dialog_title">Update installieren</string>
@@ -83,17 +90,17 @@
   <string name="notification_export_success">Update wurde exportiert</string>
   <string name="notification_export_fail">Fehler beim Export</string>
   <string name="toast_already_exporting">Update wird bereits exportiert</string>
-  <plurals name="duration_seconds">
-    <item quantity="one">1 Sekunde</item>
-    <item quantity="other"><xliff:g id="count">%d</xliff:g> Sekunden</item>
+  <plurals name="eta_seconds">
+    <item quantity="one">Noch 1 Sekunde</item>
+    <item quantity="other">Noch <xliff:g id="count">%d</xliff:g> Sekunden</item>
   </plurals>
-  <plurals name="duration_minutes">
-    <item quantity="one">1 Minute</item>
-    <item quantity="other"><xliff:g id="count">%d</xliff:g> Minuten</item>
+  <plurals name="eta_minutes">
+    <item quantity="one">Noch 1 Minute</item>
+    <item quantity="other">Noch <xliff:g id="count">%d</xliff:g> Minuten</item>
   </plurals>
-  <plurals name="duration_hours">
-    <item quantity="one">1 Stunde</item>
-    <item quantity="other"><xliff:g id="count">%d</xliff:g> Stunden</item>
+  <plurals name="eta_hours">
+    <item quantity="one">Noch 1 Stunde</item>
+    <item quantity="other">Noch <xliff:g id="count">%d</xliff:g> Stunden</item>
   </plurals>
   <string name="update_on_mobile_data_title">Achtung</string>
   <string name="update_on_mobile_data_message">Sie sind dabei ein Software-Update über das Mobilfunknetz herunterzuladen, was zu einem hohen Datenverbrauch führen kann. Möchten Sie fortfahren?</string>

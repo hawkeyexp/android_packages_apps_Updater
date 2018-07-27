@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class UpdaterController implements Controller {
+public class UpdaterController {
 
     public static final String ACTION_DOWNLOAD_PROGRESS = "action_download_progress";
     public static final String ACTION_INSTALL_PROGRESS = "action_install_progress";
@@ -157,17 +157,15 @@ public class UpdaterController implements Controller {
             @Override
             public void onResponse(int statusCode, String url, DownloadClient.Headers headers) {
                 final Update update = mDownloads.get(downloadId).mUpdate;
-                if (update.getFileSize() <= 0) {
-                    String contentLength = headers.get("Content-Length");
-                    if (contentLength != null) {
-                        try {
-                            long size = Long.parseLong(contentLength);
-                            if (size > 0) {
-                                update.setFileSize(size);
-                            }
-                        } catch (NumberFormatException e) {
-                            Log.e(TAG, "Could not get content-length");
+                String contentLength = headers.get("Content-Length");
+                if (contentLength != null) {
+                    try {
+                        long size = Long.parseLong(contentLength);
+                        if (update.getFileSize() < size) {
+                            update.setFileSize(size);
                         }
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Could not get content-length");
                     }
                 }
                 update.setStatus(UpdateStatus.DOWNLOADING);
@@ -294,7 +292,6 @@ public class UpdaterController implements Controller {
         return true;
     }
 
-    @Override
     public void setUpdatesNotAvailableOnline(List<String> downloadIds) {
         for (String downloadId : downloadIds) {
             DownloadEntry update = mDownloads.get(downloadId);
@@ -304,7 +301,6 @@ public class UpdaterController implements Controller {
         }
     }
 
-    @Override
     public void setUpdatesAvailableOnline(List<String> downloadIds, boolean purgeList) {
         List<String> toRemove = new ArrayList<>();
         for (DownloadEntry entry : mDownloads.values()) {
@@ -322,7 +318,6 @@ public class UpdaterController implements Controller {
         }
     }
 
-    @Override
     public boolean addUpdate(UpdateInfo update) {
         return addUpdate(update, true);
     }
@@ -348,7 +343,6 @@ public class UpdaterController implements Controller {
         return true;
     }
 
-    @Override
     public boolean startDownload(String downloadId) {
         Log.d(TAG, "Starting " + downloadId);
         if (!mDownloads.containsKey(downloadId) || isDownloading(downloadId)) {
@@ -384,7 +378,6 @@ public class UpdaterController implements Controller {
         return true;
     }
 
-    @Override
     public boolean resumeDownload(String downloadId) {
         Log.d(TAG, "Resuming " + downloadId);
         if (!mDownloads.containsKey(downloadId) || isDownloading(downloadId)) {
@@ -428,7 +421,6 @@ public class UpdaterController implements Controller {
         return true;
     }
 
-    @Override
     public boolean pauseDownload(String downloadId) {
         Log.d(TAG, "Pausing " + downloadId);
         if (!isDownloading(downloadId)) {
@@ -455,7 +447,6 @@ public class UpdaterController implements Controller {
         }).start();
     }
 
-    @Override
     public boolean deleteUpdate(String downloadId) {
         Log.d(TAG, "Cancelling " + downloadId);
         if (!mDownloads.containsKey(downloadId) || isDownloading(downloadId)) {
@@ -478,12 +469,10 @@ public class UpdaterController implements Controller {
         return true;
     }
 
-    @Override
     public Set<String> getIds() {
         return mDownloads.keySet();
     }
 
-    @Override
     public List<UpdateInfo> getUpdates() {
         List<UpdateInfo> updates = new ArrayList<>();
         for (DownloadEntry entry : mDownloads.values()) {
@@ -492,7 +481,6 @@ public class UpdaterController implements Controller {
         return updates;
     }
 
-    @Override
     public UpdateInfo getUpdate(String downloadId) {
         DownloadEntry entry = mDownloads.get(downloadId);
         return entry != null ? entry.mUpdate : null;
@@ -503,41 +491,38 @@ public class UpdaterController implements Controller {
         return entry != null ? entry.mUpdate : null;
     }
 
-    @Override
     public boolean isDownloading(String downloadId) {
         return mDownloads.containsKey(downloadId) &&
                 mDownloads.get(downloadId).mDownloadClient != null;
     }
 
-    @Override
     public boolean hasActiveDownloads() {
         return mActiveDownloads > 0;
     }
 
-    @Override
     public boolean isVerifyingUpdate() {
         return mVerifyingUpdates.size() > 0;
     }
 
-    @Override
     public boolean isVerifyingUpdate(String downloadId) {
         return mVerifyingUpdates.contains(downloadId);
     }
 
-    @Override
     public boolean isInstallingUpdate() {
         return UpdateInstaller.isInstalling() ||
                 ABUpdateInstaller.isInstallingUpdate(mContext);
     }
 
-    @Override
     public boolean isInstallingUpdate(String downloadId) {
         return UpdateInstaller.isInstalling(downloadId) ||
                 ABUpdateInstaller.isInstallingUpdate(mContext, downloadId);
     }
 
-    @Override
     public boolean isInstallingABUpdate() {
         return ABUpdateInstaller.isInstallingUpdate(mContext);
+    }
+
+    public boolean isWaitingForReboot(String downloadId) {
+        return ABUpdateInstaller.isWaitingForReboot(mContext, downloadId);
     }
 }

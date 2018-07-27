@@ -49,13 +49,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import org.json.JSONException;
-import org.lineageos.updater.controller.Controller;
 import org.lineageos.updater.controller.UpdaterController;
 import org.lineageos.updater.controller.UpdaterService;
 import org.lineageos.updater.download.DownloadClient;
 import org.lineageos.updater.misc.BuildInfoUtils;
 import org.lineageos.updater.misc.Constants;
-import org.lineageos.updater.misc.LegacySupport;
 import org.lineageos.updater.misc.StringGenerator;
 import org.lineageos.updater.misc.Utils;
 import org.lineageos.updater.model.UpdateInfo;
@@ -64,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class UpdatesActivity extends UpdatesListActivity {
 
@@ -238,24 +237,15 @@ public class UpdatesActivity extends UpdatesListActivity {
     private void loadUpdatesList(File jsonFile, boolean manualRefresh)
             throws IOException, JSONException {
         Log.d(TAG, "Adding remote updates");
-        Controller controller = mUpdaterService.getUpdaterController();
+        UpdaterController controller = mUpdaterService.getUpdaterController();
         boolean newUpdates = false;
 
         List<UpdateInfo> updates = Utils.parseJson(jsonFile, true);
-
-        List<String> importedNotAvailableOnline = LegacySupport.importDownloads(this, updates);
-
         List<String> updatesOnline = new ArrayList<>();
         for (UpdateInfo update : updates) {
             newUpdates |= controller.addUpdate(update);
             updatesOnline.add(update.getDownloadId());
         }
-
-        if (importedNotAvailableOnline != null) {
-            updatesOnline.removeAll(importedNotAvailableOnline);
-            controller.setUpdatesNotAvailableOnline(importedNotAvailableOnline);
-        }
-
         controller.setUpdatesAvailableOnline(updatesOnline, true);
 
         if (manualRefresh) {
@@ -317,7 +307,7 @@ public class UpdatesActivity extends UpdatesListActivity {
 
     private void downloadUpdatesList(final boolean manualRefresh) {
         final File jsonFile = Utils.getCachedUpdateList(this);
-        final File jsonFileTmp = new File(jsonFile.getAbsolutePath() + ".tmp");
+        final File jsonFileTmp = new File(jsonFile.getAbsolutePath() + UUID.randomUUID());
         String url = Utils.getServerURL(this);
         Log.d(TAG, "Checking " + url);
 
